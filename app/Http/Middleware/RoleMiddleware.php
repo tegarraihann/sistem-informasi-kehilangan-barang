@@ -16,7 +16,15 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        return $next($request); // Bypass role check
+        $userRole = auth()->user()->role;
+
+        // Periksa apakah user memiliki role yang diperlukan
+        if (!in_array($userRole, $roles)) {
+            return redirect()->route('unauthorized'); // Alihkan ke halaman unauthorized
+        }
+
+        return $next($request);
     }
+
 }
 

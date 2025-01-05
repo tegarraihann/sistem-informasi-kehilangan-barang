@@ -11,23 +11,53 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-        public function login(Request $request)
-        {
-            $credentials = $request->only('email', 'password');
 
-            if (Auth::attempt($credentials)) {
-                $request->session()->regenerate();
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
 
-                // Redirect ke dashboard berdasarkan middleware
-                return redirect()->intended('/dashboard');
-            }
+        // Periksa apakah email ada di database
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
 
+        if (!$user) {
+            // Jika email tidak ditemukan
             return back()->withErrors([
-                'email' => 'Email atau password salah.',
+                'email' => 'Email tidak ditemukan. Silakan periksa kembali.',
             ])->onlyInput('email');
         }
 
-        public function logout(Request $request)
+        // Jika email ditemukan, coba periksa password
+        if (!\Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
+            // Jika password tidak cocok
+            return back()->withErrors([
+                'password' => 'Password salah. Silakan coba lagi.',
+            ])->onlyInput('email');
+        }
+
+        // Jika email dan password cocok, lakukan autentikasi
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            // Redirect berdasarkan role pengguna
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            } elseif (Auth::user()->role === 'mahasiswa') {
+                return redirect()->route('mahasiswa.dashboard');
+            } elseif (Auth::user()->role === 'adminlapangan') {
+                return redirect()->route('security-lapangan.dashboard');
+            }
+
+            return redirect()->route('unauthorized');
+        }
+
+        // Jika gagal karena alasan lain
+        return back()->withErrors([
+            'email' => 'Terjadi kesalahan. Silakan coba lagi.',
+        ]);
+    }
+
+
+    public function logout(Request $request)
         {
             Auth::logout();
 
@@ -45,37 +75,27 @@ class AuthController extends Controller
 
         public function register(Request $request)
         {
-            // Log input data
-            \Log::info('Input Data:', $request->all());
-
-            // Validasi input
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|max:255|confirmed',
+                'password' => 'required|string|min:3|confirmed',
             ]);
 
             try {
-                // Simpan data ke database
                 $user = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
-                    'password' => Hash::make($validated['password']), // Hash password di sini
-                    'role' => 'mahasiswa', // Default role
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'mahasiswa',
                 ]);
 
-                // Log user data setelah berhasil
                 \Log::info('User Created:', $user->toArray());
-
                 return redirect('/dashboard')->with('success', 'Registrasi berhasil!');
             } catch (\Exception $e) {
-                // Log error jika terjadi masalah
                 \Log::error('Error Registering User:', ['error' => $e->getMessage()]);
-
                 return back()->withErrors('Terjadi kesalahan saat menyimpan data.');
             }
         }
-
 }
 
 

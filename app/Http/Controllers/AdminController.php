@@ -138,4 +138,10 @@ class AdminController extends Controller
         }
     }
 
+    public function profile()
+    {
+        $user = auth()->user(); // Ambil data user yang sedang login
+        return view('profile.admin', compact('user')); // Tampilkan view untuk admin
+    }
+
 }

@@ -110,6 +110,12 @@ class MahasiswaController extends Controller
 
         return view('mahasiswa.notifikasi', compact('notifikasi'));
     }
+
+    public function profile()
+    {
+        $user = auth()->user(); // Ambil data user yang sedang login
+        return view('profile.mahasiswa', compact('user')); // Tampilkan view untuk mahasiswa
+    }
 }
 
 

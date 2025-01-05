@@ -39,6 +39,17 @@
             <img src="{{ asset('assets/logo-sikerang.png') }}" alt="Logo" class="h-16 w-auto">
         </div>
 
+        <!-- Tampilkan Pesan Error -->
+        @if ($errors->any())
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Form Login -->
         <form method="POST" action="{{ route('login') }}">
             @csrf

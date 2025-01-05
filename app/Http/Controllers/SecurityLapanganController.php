@@ -67,4 +67,10 @@ class SecurityLapanganController extends Controller
 
         return view('security-lapangan.detail-barang', compact('barang'));
     }
+
+    public function profile()
+    {
+        $user = auth()->user(); // Ambil data user yang sedang login
+        return view('profile.security', compact('user')); // Tampilkan view untuk security
+    }
 }
